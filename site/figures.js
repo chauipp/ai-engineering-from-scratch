@@ -118,7 +118,8 @@
     function tokensAt(step) {
       // Start from chars (· for spaces).
       let toks = chars.map(c => c === '_' ? '·' : c);
-      for (let s = 0; s < step; s++) {
+      const lastStep = Math.min(step, mergeSchedule.length);
+      for (let s = 0; s < lastStep; s++) {
         const { pair, joined } = mergeSchedule[s];
         const out = [];
         for (let i = 0; i < toks.length; i++) {
@@ -339,7 +340,7 @@
     loop(host, (t) => {
       if (t < PHASE_A) {
         const localT = t / PHASE_A;
-        const i = Math.floor(localT * (totalPairs - 1));
+        const i = Math.min(Math.floor(localT * totalPairs), totalPairs - 1);
         winRect.setAttribute('x', chips[i].x - 1);
         chips.forEach((c, k) => c.g.firstChild.setAttribute('fill', (k === i || k === i+1) ? 'var(--blueprint-tint-strong)' : 'transparent'));
 
@@ -922,8 +923,12 @@
       if (host.dataset.figureMounted) return;
       const fn = FIGURES[host.dataset.figure];
       if (!fn) return;
-      host.dataset.figureMounted = '1';
-      fn(host);
+      try {
+        fn(host);
+        host.dataset.figureMounted = '1';
+      } catch (err) {
+        console.warn(`figure "${host.dataset.figure}" failed to render:`, err);
+      }
     });
   }
   if (document.readyState === 'loading') document.addEventListener('DOMContentLoaded', () => mount());
